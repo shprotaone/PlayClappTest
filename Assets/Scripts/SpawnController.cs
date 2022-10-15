@@ -7,14 +7,14 @@ using UnityEngine.UI;
 public class SpawnController : MonoBehaviour
 {
     private const string spawnName = "SPAWN";
-    private const string stopName = "STOP";
+    private const string stopName = "STOP";  
+
+    [SerializeField] private InputController _inputController;
+    [SerializeField] private CameraController _camController;
+    [SerializeField] private CubePool _cubePool;
 
     [SerializeField] private Button _spawnButton;
     [SerializeField] private TMP_Text _spawnButtonText;
-
-    [SerializeField] private TMP_InputField _distanceInput;
-    [SerializeField] private TMP_InputField _speedInput;
-    [SerializeField] private TMP_InputField _delayInstance;
 
     [SerializeField] private GameObject _cubePrefab;
     [SerializeField] private Transform _spawnPoint;
@@ -24,39 +24,58 @@ public class SpawnController : MonoBehaviour
     private void Start()
     {
         _spawnButton.onClick.AddListener(SpawnToggle);
+        _cubePool.CubePoolSetUp(_cubePrefab, 20, _spawnPoint);
     }
 
     private void SpawnToggle()
     {
+        _camController.ResetCamera();
+        StopAllCoroutines();
+
         if (_isSpawning)
         {
-            _isSpawning = false;
-            _spawnButtonText.text = spawnName;
-            StopCoroutine(Spawn());           
-        } 
-        
+            StopSpawning();  
+        }         
         else
         {
-            _isSpawning = true;
-            _spawnButtonText.text = stopName;
-            StartCoroutine(Spawn());
+            if (_inputController.IsFilled)
+            {
+                _isSpawning = true;
+                _spawnButtonText.text = stopName;
+                StartCoroutine(Spawn());
+            }
         }       
     }
 
     private IEnumerator Spawn()
     {
-        float delay = (float.Parse(_delayInstance.text));
-        CubeModel cubeModel = new CubeModel(float.Parse(_speedInput.text), float.Parse(_distanceInput.text));
-        
-
-        while (_isSpawning)
-        {            
-            GameObject cube = Instantiate(_cubePrefab,_spawnPoint);
+        float delay = _inputController.Delay;
+        float speed = _inputController.Speed;
+        float distance = _inputController.Distance;
             
+        _camController.ChangeSizeCamera(distance);
+
+        CubeModel cubeModel = new CubeModel(speed,distance);
+        
+        while (_isSpawning)
+        {
+            GameObject cube = _cubePool.GetCube();
             cube.GetComponent<CubeController>().InitCube(cubeModel);
+
             yield return new WaitForSeconds(delay);
         }
 
         yield break;
+    }
+
+    private void StopSpawning()
+    {
+        _isSpawning = false;
+        _spawnButtonText.text = spawnName;
+
+        foreach (var cube in _cubePool.Pool)
+        {
+            cube.SetActive(false);
+        }
     }
 }   

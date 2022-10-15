@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CubeController : MonoBehaviour
@@ -10,7 +8,7 @@ public class CubeController : MonoBehaviour
     private float _distance;
 
     private void Update()
-    {
+    {        
         Movement();
     }
 
@@ -18,8 +16,6 @@ public class CubeController : MonoBehaviour
     {
         _speed = cubeModel.Speed;
         _distance = cubeModel.Distance;
-
-        _startPoint = transform.position;
     }
 
     private void Movement()
@@ -28,11 +24,21 @@ public class CubeController : MonoBehaviour
 
         if (distanceOver)
         {
-            transform.Translate(Vector3.right * _speed * Time.deltaTime);
+            transform.Translate(Vector3.up * _speed * Time.deltaTime);
         }
         else
-        {
-            Destroy(this.gameObject);
+        {           
+            this.gameObject.SetActive(false);
         }        
+    }
+
+    private void ResetCube()
+    {
+        transform.position = Vector3.zero;
+    }
+
+    private void OnDisable()
+    {
+        ResetCube();
     }
 }
